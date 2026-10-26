@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Model Performance{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Model Performance</h1>
+    <p>Results from comparing Linear Regression, Decision Tree, Random Forest, and Gradient
+    Boosting on the same held-out test set.</p>
+</section>
+
+<section class="section-block">
+    <h2>Model Comparison</h2>
+    {% if comparison_table %}
+    <div class="table-scroll">
+    <table class="data-table">
+        <thead>
+            <tr><th>Model</th><th>MAE</th><th>MSE</th><th>RMSE</th><th>R²</th></tr>
+        </thead>
+        <tbody>
+        {% for row in comparison_table %}
+            <tr class="{{ 'best-row' if loop.first }}">
+                <td>{{ row.Model }}{% if loop.first %} <span class="tag tag-model">best</span>{% endif %}</td>
+                <td>{{ "%.3f"|format(row.MAE) }}</td>
+                <td>{{ "%.3f"|format(row.MSE) }}</td>
+                <td>{{ "%.3f"|format(row.RMSE) }}</td>
+                <td>{{ "%.4f"|format(row.R2) }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="muted-note">No comparison table found. Run <code>src/train_model.py</code> first.</p>
+    {% endif %}
+</section>
+
+<section class="section-block">
+    <h2>Diagnostic Plots</h2>
+    {% if eval_figures %}
+    <div class="figure-grid">
+        {% for fig in eval_figures %}
+        <div class="figure-card">
+            <img src="{{ url_for('serve_eval_figure', filename=fig) }}" alt="{{ fig }}" loading="lazy">
+            <span class="figure-caption">{{ fig }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted-note">No evaluation plots found. Run <code>src/evaluate_model.py</code> first.</p>
+    {% endif %}
+</section>
+{% endblock %}

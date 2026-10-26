@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Predict Sales{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Sales Prediction</h1>
+    <p>Plan your campaign and estimate sales from your advertising budget.</p>
+</section>
+
+{% if not model_ready %}
+<div class="flash flash-error">Model unavailable: {{ model_error }}</div>
+{% else %}
+
+<form class="form-card" method="POST" action="{{ url_for('predict_submit') }}" id="predict-form">
+
+    {% if advertising %}
+    <div class="form-heading"><div><span class="eyebrow">CAMPAIGN PLANNER</span><h2>Build your budget mix</h2>
+    <p class="muted-note">Use the same spending units as the dataset. Sales are shown in its original units.</p></div><span class="status-pill">Model ready</span></div>
+    <div class="preset-row"><span>Start with an example</span>
+        <button class="preset" type="button" data-budget="50,10,5">Small campaign</button>
+        <button class="preset" type="button" data-budget="100,20,10">Balanced campaign</button>
+        {% if advertising_stats %}<button class="preset" type="button" data-budget="{{ advertising_stats.channels | map(attribute='median') | join(',') }}">Dataset medians</button>{% endif %}
+    </div>
+    <div class="form-grid channel-grid">
+    {% for field in ["TV", "Radio", "Newspaper"] %}
+        <div class="form-field channel-field"><span class="channel-number">0{{ loop.index }}</span>
+        <label for="{{ field }}">{{ field }} advertising spend</label>
+        <input type="number" id="{{ field }}" name="{{ field }}" min="0" step="any" placeholder="0.00" value="{{ values.get(field, '') }}" required>
+        {% if advertising_stats %}{% set channel = advertising_stats.channels[loop.index0] %}
+        <small>Observed range: {{ '%.1f'|format(channel.min) }}–{{ '%.1f'|format(channel.max) }}</small>{% endif %}</div>
+    {% endfor %}
+    </div>
+    <div class="budget-summary"><div><span class="eyebrow">TOTAL ADVERTISING SPEND</span><output id="budget-total" aria-live="polite">0.00</output></div>
+    <p>Change the channel mix to explore a different campaign.</p></div>
+    {% else %}
+    <div class="form-grid">
+        <div class="form-field">
+            <label for="product">Product <span class="tag tag-record">record only</span></label>
+            <input type="text" id="product" name="product" placeholder="e.g. Ergonomic Office Chair">
+        </div>
+
+        <div class="form-field">
+            <label for="category">Category <span class="tag tag-model">model input</span></label>
+            <select id="category" name="category" required>
+                {% for c in categories %}
+                <option value="{{ c }}">{{ c }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label for="price">Price <span class="tag tag-record">record only</span></label>
+            <input type="number" id="price" name="price" min="0" step="0.01" placeholder="e.g. 149.99">
+        </div>
+
+        <div class="form-field">
+            <label for="quantity">Quantity <span class="tag tag-model">model input</span></label>
+            <input type="number" id="quantity" name="quantity" min="1" step="1" value="1" required>
+        </div>
+
+        <div class="form-field">
+            <label for="discount">Discount <span class="tag tag-model">model input</span></label>
+            <input type="number" id="discount" name="discount" min="0" max="1" step="0.01" value="0" required>
+            <small>As a fraction, e.g. 0.15 for 15%</small>
+        </div>
+
+        <div class="form-field">
+            <label for="store">Store <span class="tag tag-record">record only</span></label>
+            <input type="text" id="store" name="store" placeholder="e.g. Store #14">
+        </div>
+
+        <div class="form-field">
+            <label for="region">Region <span class="tag tag-model">model input</span></label>
+            <select id="region" name="region" required>
+                {% for r in regions %}
+                <option value="{{ r }}">{{ r }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label for="segment">Segment <span class="tag tag-model">model input</span></label>
+            <select id="segment" name="segment" required>
+                {% for s in segments %}
+                <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label for="ship_mode">Ship Mode <span class="tag tag-model">model input</span></label>
+            <select id="ship_mode" name="ship_mode" required>
+                {% for sm in ship_modes %}
+                <option value="{{ sm }}">{{ sm }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label for="promotion">Promotion <span class="tag tag-record">record only</span></label>
+            <select id="promotion" name="promotion">
+                <option value="None">None</option>
+                <option value="Seasonal">Seasonal</option>
+                <option value="Clearance">Clearance</option>
+                <option value="Flash Sale">Flash Sale</option>
+            </select>
+        </div>
+
+        <div class="form-field">
+            <label for="order_date">Date <span class="tag tag-model">model input</span></label>
+            <input type="date" id="order_date" name="order_date" value="{{ today }}" required>
+        </div>
+    </div>
+
+    {% endif %}
+    <button type="submit" class="btn btn-primary btn-block">Predict Sales</button>
+</form>
+
+{% endif %}
+{% endblock %}

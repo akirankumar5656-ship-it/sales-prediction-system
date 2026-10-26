@@ -1,0 +1,8 @@
+{
+  "model_name": "Gradient Boosting Regressor",
+  "feature_columns": [
+    "TV",
+    "Radio",
+    "Newspaper"
+  ]
+}

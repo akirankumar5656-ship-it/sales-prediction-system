@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Prediction Result{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Prediction Result</h1>
+</section>
+
+<div class="result-card">
+    <span class="result-label">Predicted Sales</span>
+    <span class="result-value">{{ "%.2f"|format(predicted_sales) }}</span>
+    <p class="result-caption">Sales in the original dataset units · Estimate saved to your history</p>
+</div>
+{% if insight %}
+<section class="stat-grid">
+    <div class="stat-card"><span class="stat-value">{{ '%.2f'|format(insight.total_budget) }}</span><span class="stat-label">Total advertising spend</span></div>
+    <div class="stat-card"><span class="stat-value">{{ '%.2f'|format(insight.average_sales) }}</span><span class="stat-label">Dataset average sales</span></div>
+    <div class="stat-card"><span class="stat-value">{{ '%+.2f'|format(insight.difference) }}</span><span class="stat-label">Compared with dataset average</span></div>
+</section>
+{% for warning in insight.warnings %}<div class="flash flash-warning">{{ warning }} Predictions beyond observed budgets can be less reliable.</div>{% endfor %}
+<p class="muted-note">The dataset average is a reference across historical campaigns. This comparison does not measure a causal increase in sales.</p>
+{% endif %}
+<div class="details-grid">
+    <div class="details-card">
+        <h3>Used by the Model</h3>
+        <table class="detail-table">
+            {% for key, value in model_input.items() %}
+            <tr><td>{{ key }}</td><td>{{ value }}</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    {% if not advertising %}<div class="details-card">
+        <h3>Stored for Your Records</h3>
+        <table class="detail-table">
+            <tr><td>Product</td><td>{{ record_extras.product or "—" }}</td></tr>
+            <tr><td>Store</td><td>{{ record_extras.store or "—" }}</td></tr>
+            <tr><td>Promotion</td><td>{{ record_extras.promotion or "—" }}</td></tr>
+            <tr><td>Price</td><td>{{ record_extras.price if record_extras.price is not none else "—" }}</td></tr>
+        </table>
+        <p class="muted-note">These fields aren't part of the trained model's feature set,
+        so they don't influence the prediction — they're saved to the database for the
+        dashboard and your own reporting.</p>
+    </div>
+    {% endif %}
+</div>
+
+<a href="{{ url_for('predict_form') }}" class="btn btn-secondary">Make Another Prediction</a>
+<a href="{{ url_for('history') }}" class="btn btn-secondary">View History</a>
+{% endblock %}

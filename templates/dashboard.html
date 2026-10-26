@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Dashboard</h1>
+    <p>Summary of predictions made through this app, plus exploratory charts from the training data.</p>
+</section>
+
+<section class="stat-grid">
+    <div class="stat-card">
+        <span class="stat-value">{{ stats.total_predictions }}</span>
+        <span class="stat-label">Total Predictions</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ "%.2f"|format(stats.avg_predicted_sales) }}</span>
+        <span class="stat-label">Average Predicted Sales</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ "%.2f"|format(stats.min_predicted_sales) }}</span>
+        <span class="stat-label">Minimum</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">{{ "%.2f"|format(stats.max_predicted_sales) }}</span>
+        <span class="stat-label">Maximum</span>
+    </div>
+</section>
+
+{% if stats.by_category %}
+<section class="section-block">
+    <h2>Predictions by Category</h2>
+    <table class="data-table">
+        <thead><tr><th>Category</th><th>Count</th><th>Avg Predicted Sales</th></tr></thead>
+        <tbody>
+        {% for row in stats.by_category %}
+            <tr><td>{{ row.category }}</td><td>{{ row.count }}</td><td>{{ "%.2f"|format(row.avg_sales) }}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+<section class="section-block">
+    <h2>Recent Predictions</h2>
+    {% if recent %}
+    <div class="table-scroll">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Model Inputs</th><th>Predicted Sales</th><th>Logged At (UTC)</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for p in recent %}
+            <tr>
+                <td>{{ p.inputs_json or p.category }}</td>
+                <td>{{ "%.2f"|format(p.predicted_sales) }}</td>
+                <td>{{ p.created_at }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% else %}
+    <p class="muted-note">No predictions logged yet — <a href="{{ url_for('predict_form') }}">make one</a>.</p>
+    {% endif %}
+</section>
+
+<section class="section-block">
+    <h2>Exploratory Data Analysis</h2>
+    {% if eda_figures %}
+    <div class="figure-grid">
+        {% for fig in eda_figures %}
+        <div class="figure-card">
+            <img src="{{ url_for('serve_figure', filename=fig) }}" alt="{{ fig }}" loading="lazy">
+            <span class="figure-caption">{{ fig }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="muted-note">No EDA charts found. Run <code>src/eda.py</code> to generate them.</p>
+    {% endif %}
+</section>
+{% endblock %}

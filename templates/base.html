@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Sales Prediction System{% endblock %}</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<header class="navbar">
+    <div class="navbar-inner">
+        <a class="brand" href="{{ url_for('home') }}"><span class="brand-mark" aria-hidden="true">↗</span> Sales Studio</a>
+        <nav class="nav-links" aria-label="Main navigation">
+            <a href="{{ url_for('home') }}" class="{{ 'active' if request.endpoint == 'home' }}">Home</a>
+            <a href="{{ url_for('predict_form') }}" class="{{ 'active' if request.endpoint in ['predict_form','predict_submit'] }}">Predict</a>
+            <a href="{{ url_for('analytics_dashboard') }}" class="{{ 'active' if request.endpoint == 'analytics_dashboard' }}">Analytics</a>
+            <a href="{{ url_for('dashboard') }}" class="{{ 'active' if request.endpoint == 'dashboard' }}">Dashboard</a>
+            <a href="{{ url_for('performance') }}" class="{{ 'active' if request.endpoint == 'performance' }}">Model Performance</a>
+            <a href="{{ url_for('history') }}" class="{{ 'active' if request.endpoint == 'history' }}">History</a>
+            {% if g.user %}
+                <span class="nav-user">{{ g.user.username }}</span>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Login</a>
+                <a href="{{ url_for('register') }}">Register</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+
+<main class="container" id="main-content">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-stack">
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer">
+    <p>Sales Studio · Make more informed campaign decisions</p>
+</footer>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

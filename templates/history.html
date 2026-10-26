@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Prediction History{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Prediction History</h1>
+    <p>
+        {% if viewing_own %}
+            Every prediction made from your account, most recent first.
+        {% else %}
+            Every guest prediction made on this app (log in to keep a personal history instead).
+        {% endif %}
+    </p>
+</section>
+
+{% if records %}
+<div class="history-tools"><label for="history-search">Search saved predictions<input id="history-search" type="search" placeholder="Search inputs, dates, or sales…"></label>
+<a class="btn btn-secondary" href="{{ url_for('export_history') }}">Download CSV</a></div>
+<p class="muted-note">Showing the latest {{ records|length }} predictions. CSV includes all visible records.</p>
+<p id="search-empty" class="muted-note" hidden>No matching predictions.</p>
+<div class="table-scroll">
+<table class="data-table" id="history-table">
+    <thead>
+        <tr>
+            <th>Date/Time (UTC)</th><th>Model Inputs</th><th>Predicted Sales</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for r in records %}
+        <tr>
+            <td>{{ r.created_at }}</td>
+            <td>{{ r.inputs_json or r.category }}</td>
+            <td>{{ "%.2f"|format(r.predicted_sales) }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}
+<p class="muted-note">No predictions yet — <a href="{{ url_for('predict_form') }}">make one</a>.</p>
+{% endif %}
+{% endblock %}

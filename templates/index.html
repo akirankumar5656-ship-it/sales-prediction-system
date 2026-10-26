@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Sales Studio — Campaign Insights{% endblock %}
+{% block content %}
+<section class="hero studio-hero">
+<div class="hero-copy"><span class="eyebrow">YOUR NEXT CAMPAIGN STARTS HERE</span><h1>A clearer view of<br><em>your sales potential.</em></h1>
+<p class="hero-subtitle">Turn your advertising budget into a sales estimate. Explore your channel mix, understand historical campaigns, and keep every result in one place.</p>
+<div class="hero-actions"><a href="{{ url_for('predict_form') }}" class="btn btn-primary">Plan a campaign ↗</a><a href="{{ url_for('analytics_dashboard') }}" class="btn btn-secondary">Explore the data</a></div>
+<span class="hero-footnote">TV · Radio · Newspaper / Original dataset units</span></div>
+<div class="hero-visual" aria-hidden="true"><span class="eyebrow">FROM BUDGET TO INSIGHT</span><div class="visual-chart"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="visual-footer"><strong>Explore. Estimate. Refine.</strong><span>Make your next campaign count.</span></div></div>
+</section>
+{% if not model_ready %}<div class="flash flash-error">Model unavailable. Run <code>python run_pipeline.py</code> and restart the app.</div>{% endif %}
+<section class="card-grid">
+<div class="card"><span class="eyebrow">01 / PLAN</span><h3>Try a budget mix</h3><p>Enter spend for each channel or start with a sample campaign. See your total update as you go.</p></div>
+<div class="card"><span class="eyebrow">02 / UNDERSTAND</span><h3>Put sales in context</h3><p>Compare your estimate with historical average sales and check how your budget fits the observed data.</p></div>
+<div class="card"><span class="eyebrow">03 / REVIEW</span><h3>Keep your work together</h3><p>Review saved predictions and export them to CSV. Create an account to keep a personal campaign history.</p></div>
+</section>
+{% endblock %}

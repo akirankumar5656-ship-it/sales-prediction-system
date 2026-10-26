@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<section class="page-header">
+    <h1>Analytics Dashboard</h1>
+    <p>Computed directly from the training dataset and the saved model results — nothing on this page is simulated.</p>
+</section>
+
+{% if not data.data_available %}
+<div class="flash flash-error">
+    No dataset found at <code>data/raw/sales.csv</code> (or <code>data/processed/sales_processed.csv</code>).
+    Add the dataset and reload this page to see real statistics.
+</div>
+{% else %}
+
+{% if data.advertising %}
+<section class="stat-grid">
+    <div class="stat-card"><span class="stat-value">{{ data.advertising.rows }}</span><span class="stat-label">Historical campaigns</span></div>
+    <div class="stat-card"><span class="stat-value">{{ '%.2f'|format(data.advertising.average_sales) }}</span><span class="stat-label">Average sales</span></div>
+    <div class="stat-card"><span class="stat-value">{{ '%.1f'|format(data.advertising.min_sales) }}–{{ '%.1f'|format(data.advertising.max_sales) }}</span><span class="stat-label">Observed sales range</span></div>
+</section>
+<section class="details-grid">
+    <div class="details-card"><span class="eyebrow">BUDGET DISTRIBUTION</span><h3>Where campaigns spend</h3>
+        {% for channel in data.advertising.channels %}
+        <div class="channel-share"><div><strong>{{ channel.name }}</strong><span>{{ '%.1f'|format(channel.share) }}%</span></div>
+        <meter min="0" max="100" value="{{ channel.share }}" aria-label="{{ channel.name }} share of total advertising spend">{{ channel.share }}%</meter></div>
+        {% endfor %}
+        <p class="muted-note">Share of total advertising spend across the dataset.</p>
+    </div>
+    <div class="details-card"><span class="eyebrow">SPENDING BENCHMARKS</span><h3>A typical campaign</h3>
+        <table class="detail-table"><thead><tr><th>Channel</th><th>Average</th><th>Median</th></tr></thead><tbody>
+        {% for channel in data.advertising.channels %}<tr><td>{{ channel.name }}</td><td>{{ '%.2f'|format(channel.mean) }}</td><td>{{ '%.2f'|format(channel.median) }}</td></tr>{% endfor %}
+        </tbody></table><p class="muted-note">All values use the original dataset units.</p>
+    </div>
+</section>
+{% else %}
+<section class="stat-grid">
+    <div class="stat-card">
+        <span class="stat-value">
+            {% if data.summary.total_sales is not none %}{{ "{:,.2f}".format(data.summary.total_sales) }}{% else %}—{% endif %}
+        </span>
+        <span class="stat-label">Total Sales</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">
+            {% if data.summary.average_sales is not none %}{{ "{:,.2f}".format(data.summary.average_sales) }}{% else %}—{% endif %}
+        </span>
+        <span class="stat-label">Average Sales</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value">
+            {{ data.summary.number_of_products if data.summary.number_of_products is not none else "—" }}
+        </span>
+        <span class="stat-label">Number of Products</span>
+    </div>
+    <div class="stat-card">
+        <span class="stat-value stat-value-small">
+            {{ data.summary.best_selling_product if data.summary.best_selling_product else "—" }}
+        </span>
+        <span class="stat-label">
+            Best-Selling Product
+            {% if data.summary.best_selling_product_sales is not none %}
+                ({{ "{:,.2f}".format(data.summary.best_selling_product_sales) }})
+            {% endif %}
+        </span>
+    </div>
+</section>
+
+<section class="section-block">
+    <h2>Sales Trend</h2>
+    {% if data.trend %}
+    <div class="chart-card"><canvas id="trendChart"></canvas></div>
+    {% else %}
+    <p class="muted-note">Not enough date/sales data to build a trend chart.</p>
+    {% endif %}
+</section>
+
+<section class="chart-row">
+    <div class="section-block">
+        <h2>Sales by Category</h2>
+        {% if data.by_category %}
+        <div class="chart-card"><canvas id="categoryChart"></canvas></div>
+        {% else %}
+        <p class="muted-note">No Category column found in the dataset.</p>
+        {% endif %}
+    </div>
+
+    <div class="section-block">
+        <h2>Sales by Region</h2>
+        {% if data.by_region %}
+        <div class="chart-card"><canvas id="regionChart"></canvas></div>
+        {% else %}
+        <p class="muted-note">No Region column found in the dataset.</p>
+        {% endif %}
+    </div>
+</section>
+
+{% endif %}
+{% endif %}
+
+<section class="section-block">
+    <h2>Model Accuracy</h2>
+    {% if data.model_accuracy %}
+    <div class="stat-grid">
+        <div class="stat-card">
+            <span class="stat-value stat-value-small">{{ data.model_accuracy.model_name }}</span>
+            <span class="stat-label">Best Model</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">{{ "%.3f"|format(data.model_accuracy.mae) }}</span>
+            <span class="stat-label">MAE</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">{{ "%.3f"|format(data.model_accuracy.rmse) }}</span>
+            <span class="stat-label">RMSE</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">{{ "%.4f"|format(data.model_accuracy.r2) }}</span>
+            <span class="stat-label">R² Score</span>
+        </div>
+    </div>
+    <p class="muted-note">
+        Full model-by-model comparison on the <a href="{{ url_for('performance') }}">Model Performance</a> page.
+    </p>
+    {% else %}
+    <p class="muted-note">No trained model results found. Run <code>src/train_model.py</code> first.</p>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+{% if data.data_available and (data.trend or data.by_category or data.by_region) %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+    const palette = ["#2563eb", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
+
+    {% if data.trend %}
+    new Chart(document.getElementById("trendChart"), {
+        type: "line",
+        data: {
+            labels: {{ data.trend.labels | tojson }},
+            datasets: [{
+                label: "Total Sales",
+                data: {{ data.trend["values"] | tojson }},
+                borderColor: "#2563eb",
+                backgroundColor: "rgba(37,99,235,0.08)",
+                fill: true,
+                tension: 0.3,
+                pointRadius: 2,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+    {% endif %}
+
+    {% if data.by_category %}
+    new Chart(document.getElementById("categoryChart"), {
+        type: "bar",
+        data: {
+            labels: {{ data.by_category.labels | tojson }},
+            datasets: [{
+                label: "Total Sales",
+                data: {{ data.by_category["values"] | tojson }},
+                backgroundColor: palette,
+            }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false } } }
+    });
+    {% endif %}
+
+    {% if data.by_region %}
+    new Chart(document.getElementById("regionChart"), {
+        type: "bar",
+        data: {
+            labels: {{ data.by_region.labels | tojson }},
+            datasets: [{
+                label: "Total Sales",
+                data: {{ data.by_region["values"] | tojson }},
+                backgroundColor: palette,
+            }]
+        },
+        options: { responsive: true, indexAxis: "y", plugins: { legend: { display: false } } }
+    });
+    {% endif %}
+</script>
+{% endif %}
+{% endblock %}
